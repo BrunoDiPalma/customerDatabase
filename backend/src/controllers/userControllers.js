@@ -67,6 +67,45 @@ export async function postUsers(req, res) {
     }
 }
 
+export async function loginUser (req, res) {
+    try {
+        const { email, senha } = req.body
+
+        if(!email || !senha) {
+            return res.status(400).json({ error: "E-mail e senha são obrigatórios"})
+        }
+
+        const [result] = await pool.query("SELECT id, nome, email, senha FROM users WHERE email = ?",
+            [email]
+        )
+
+        if (result.length === 0) {
+            return res.status(401).json({ error: "E-mail ou senha inválidos"})
+        }
+
+        const user = result[0]
+
+        const senhaValida = await bcrypt.compare(senha, user.senha)
+
+        if(!senhaValida) {
+            return res.status().json({ error: "E-mail ou senha inválidos"})
+        }
+
+        return res.status(200).json({
+            mensagem: "Login realizado com sucesso",
+            usuário: {
+                id: user.id,
+                nome: user.nome,
+                email: user.email
+            }
+        })
+
+    }catch (error) {
+    console.log(error)
+        return res.status(500).json({ error: "E-mail ou senha incorretos"})
+    }
+}
+
 export async function updateUser (req, res) {
     try {
         const {id} = req.params

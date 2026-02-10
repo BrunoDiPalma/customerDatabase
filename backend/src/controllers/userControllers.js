@@ -3,13 +3,30 @@ import bcrypt from "bcrypt"
 
 export async function getUsers (req, res) {
     try {
-        const [rows] = await pool.query("SELECT * FROM users")
+        const [rows] = await pool.query("SELECT id, nome, email, pais, genero from USERS")
         return res.status(200).json(rows)
     }catch (error) {
         console.error(error)
         return res.status(500).json({ error: "Erro ao buscar usuário"})
     }
 }
+
+export async function GetUserbyID (req, res) {
+    try {
+        const { id } = req.params
+
+        const [rows] = await pool.query("SELECT id, nome, email from USERS where ID = ?",
+            [id]
+        )
+        if (rows.length === 0) {
+            return res.status(404).json({ error: "Nenhum usuário localizado"})
+        }
+        return res.status(200).json (rows[0])
+
+    }catch(error) {
+    console.log(error)
+    return res.status(500).json({ error: "Erro ao buscar usuário"})
+}}
 
 export async function postUsers(req, res) {
         try {
@@ -47,6 +64,30 @@ export async function postUsers(req, res) {
     }catch (error) {
         console.error(error)
         return res.status(500).json({ error: "Erro ao cadastrar usuário."})
+    }
+}
+
+export async function updateUser (req, res) {
+    try {
+        const {id} = req.params
+        const { nome, email, data_nascimento, pais, genero} = req.body
+
+        const [result] = await pool.query("UPDATE users SET nome = ?, email = ?, data_nascimento = ?, pais = ?, genero = ? where ID = ?",
+            [nome, email, data_nascimento, pais, genero, id]
+        )
+        if (result.affectedRows === 0){
+            return res.status(404).json({ error: "Usuário não encontrado"})
+        }
+
+        if(result.changedRows === 0){
+            return res.status(200).json({ mensagem: "Nenhuma alteração foi realizada"})
+        }
+
+        return res.status(200).json({ mensagem: "Usuário atualizado com sucesso!"})
+
+    } catch(error){
+        console.log(error)
+        return res.status(500).json({ error: "Erro ao atualizar usuário"})
     }
 }
 
